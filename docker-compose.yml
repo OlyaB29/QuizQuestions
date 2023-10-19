@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15.1
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_DB: questions_db
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+  web:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://root:root@db/questions_db
+    volumes:
+      - .:/QuizQuestions
+    ports:
+      - "8080:8080"
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; uvicorn quiz_app:app --host 0.0.0.0 --port 8080 --reload'
+    restart: always
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
